@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>text game</title>
+
+<style>
+    body {
+        background: #000;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .box {
+        width: 100%;
+        max-width: 500px;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    button {
+        width: 100%;
+        background: #111;
+        color: #fff;
+        border: 1px solid #333;
+        padding: 16px;
+        margin: 10px 0;
+        border-radius: 10px;
+        font-size: 16px;
+    }
+
+    textarea {
+        width: 100%;
+        height: 120px;
+        background: #0d0d0d;
+        color: #fff;
+        border: 1px solid #333;
+        border-radius: 10px;
+        padding: 14px;
+        resize: none;
+        font-size: 16px;
+        box-sizing: border-box;
+    }
+
+    .result {
+        margin-top: 15px;
+        padding: 14px;
+        border: 1px solid #333;
+        border-radius: 10px;
+        min-height: 50px;
+        font-size: 16px;
+        word-break: break-all;
+        background: #0d0d0d;
+    }
+
+    .toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #111;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        display: none;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <div id="menu">
+        <button onclick="setMode('encode')">🔐 Metni Şifreye Çevir</button>
+        <button onclick="setMode('decode')">📝 Şifreyi Metne Çevir</button>
+    </div>
+
+    <div id="app" style="display:none;">
+        <textarea id="input" placeholder="Metni buraya yaz..."></textarea>
+
+        <button onclick="convert()">Dönüştür</button>
+
+        <div class="result" id="output"></div>
+
+        <button onclick="copyText()">📋 Kopyala</button>
+        <button onclick="goBack()">⬅️ Geri Git</button>
+    </div>
+
+</div>
+
+<div class="toast" id="toast">Kopyalandı ✔</div>
+
+<script>
+/* === ELEMENTLER (iOS FIX) === */
+const menu   = document.getElementById("menu");
+const app    = document.getElementById("app");
+const input  = document.getElementById("input");
+const output = document.getElementById("output");
+const toast  = document.getElementById("toast");
+
+/* === ŞİFRELEME TABLOSU === */
+const encodeMap = {
+    a:'@', b:'8', c:'(', d:'$', e:'3', f:'%',
+    g:'9', h:'#', i:'!', j:';', k:'<', l:'|',
+    m:'M', n:'^', o:'0', p:'?', q:'1', r:'2',
+    s:'5', t:'+', u:'_', v:'V', w:'W', x:'X',
+    y:'Y', z:'7'
+};
+
+const decodeMap = {};
+for (let k in encodeMap) decodeMap[encodeMap[k]] = k;
+
+let mode = '';
+
+function setMode(m) {
+    mode = m;
+    menu.style.display = "none";
+    app.style.display = "block";
+}
+
+function goBack() {
+    app.style.display = "none";
+    menu.style.display = "block";
+    input.value = "";
+    output.innerText = "";
+}
+
+function convert() {
+    let text = input.value;
+    let result = "";
+
+    if (mode === "encode") {
+        for (let c of text.toLowerCase())
+            result += encodeMap[c] || c;
+    } else {
+        for (let c of text)
+            result += decodeMap[c] || c;
+    }
+
+    output.innerText = result;
+}
+
+/* === iOS + ANDROID KOPYALAMA === */
+function copyText() {
+    const text = output.innerText;
+    if (!text) return;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(showToast).catch(() => {
+            fallbackCopy(text);
+        });
+    } else {
+        fallbackCopy(text);
+    }
+}
+
+function fallbackCopy(text) {
+    const temp = document.createElement("textarea");
+    temp.value = text;
+    temp.style.position = "fixed";
+    temp.top = "0";
+    temp.left = "0";
+    temp.opacity = "0";
+    document.body.appendChild(temp);
+    temp.focus();
+    temp.select();
+    try {
+        document.execCommand("copy");
+        showToast();
+    } catch (err) {
+        console.log("Copy failed");
+    }
+    document.body.removeChild(temp);
+}
+
+function showToast() {
+    toast.style.display = "block";
+    setTimeout(() => toast.style.display = "none", 1500);
+}
+</script>
+
+</body>
+</html>
